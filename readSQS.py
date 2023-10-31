@@ -41,10 +41,27 @@ while True:
             """
             Aqui se procesa un audio
             """
-            
+
             # Elimina el mensaje de la cola después de procesarlo (comentarlo si no quieres eliminar los mensajes)
             sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
     else:
-        print('No se encontraron mas mensajes en la cola')
+        print('No se encontraron mas mensajes en la cola, se procedera a cerrar el cluster')
+        lambda_function_name = 'deleteAudioProcessDeploy'
+        lambda_client = boto3.client('lambda', aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key, region_name=region_name)
+        try:
+            # Ejecuta la función Lambda
+            response = lambda_client.invoke(
+                FunctionName=lambda_function_name,
+                InvocationType='RequestResponse'  # Puedes cambiar el tipo de invocación según tus necesidades
+            )
+
+            # Verifica la respuesta
+            if response['StatusCode'] == 200:
+                print(f"Función Lambda '{lambda_function_name}' ejecutada correctamente")
+            else:
+                print(f"Error al ejecutar la función Lambda: {response}")
+        except Exception as e:
+            print(f"Error al ejecutar la función Lambda: {e}")
+
         break
 
