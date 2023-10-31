@@ -12,6 +12,7 @@ region_name = 'us-east-1'
 
 # Configura el cliente de SQS
 sqs = boto3.client('sqs', aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key, aws_session_token=aws_session_token,region_name=region_name)
+s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key, region_name=region_name)
 
 # Obtiene la URL de la cola
 response = sqs.get_queue_url(QueueName=queue_name)
@@ -28,9 +29,19 @@ while True:
             receipt_handle = message['ReceiptHandle']
 
             # Haz algo con el cuerpo del mensaje aquí
-            print(f'Mensaje recibido: {body}')
-            time.sleep(5)
-
+            try:
+                bucket_name = 'copus-audio'
+                s3_object_key = str(message['Body'])
+                
+                s3.head_object(Bucket=bucket_name, Key=s3_object_key)
+                print(f"El objeto '{s3_object_key}' fue encontrado.")
+            except:
+                print(f"No existe un objeto '{s3_object_key}'.")
+            
+            """
+            Aqui se procesa un audio
+            """
+            
             # Elimina el mensaje de la cola después de procesarlo (comentarlo si no quieres eliminar los mensajes)
             sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
     else:
